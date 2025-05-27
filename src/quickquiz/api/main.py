@@ -5,7 +5,7 @@ from fastapi import FastAPI
 app = FastAPI(
     title="QuickQuiz-GPT",
     description="AI-powered quiz question generation microservice",
-    version="0.1.0"
+    version="0.1.0",
 )
 
 

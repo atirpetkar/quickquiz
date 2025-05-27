@@ -1,14 +1,16 @@
 """Pydantic schemas for request/response models."""
 
-from pydantic import BaseModel, HttpUrl, Field
-from typing import Optional, List, Dict, Any
+import uuid
 from datetime import datetime
 from enum import Enum
-import uuid
+from typing import Any
+
+from pydantic import BaseModel, Field, HttpUrl
 
 
 class QuestionType(str, Enum):
     """Question type enumeration."""
+
     MULTIPLE_CHOICE = "multiple_choice"
     TRUE_FALSE = "true_false"
     SHORT_ANSWER = "short_answer"
@@ -17,6 +19,7 @@ class QuestionType(str, Enum):
 
 class DifficultyLevel(str, Enum):
     """Difficulty level enumeration."""
+
     EASY = "easy"
     MEDIUM = "medium"
     HARD = "hard"
@@ -24,6 +27,7 @@ class DifficultyLevel(str, Enum):
 
 class SourceType(str, Enum):
     """Source type enumeration."""
+
     PDF = "pdf"
     URL = "url"
     TEXT = "text"
@@ -32,7 +36,7 @@ class SourceType(str, Enum):
 # Base schemas
 class BaseSchema(BaseModel):
     """Base schema with common configurations."""
-    
+
     class Config:
         from_attributes = True
 
@@ -40,125 +44,137 @@ class BaseSchema(BaseModel):
 # Document schemas
 class DocumentCreate(BaseModel):
     """Schema for creating a document."""
+
     title: str = Field(..., min_length=1, max_length=255)
     source_type: SourceType
-    source_url: Optional[HttpUrl] = None
-    content: Optional[str] = None
-    metadata: Optional[Dict[str, Any]] = None
+    source_url: HttpUrl | None = None
+    content: str | None = None
+    metadata: dict[str, Any] | None = None
 
 
 class DocumentResponse(BaseSchema):
     """Schema for document response."""
+
     id: uuid.UUID
     title: str
     source_type: str
-    source_url: Optional[str]
+    source_url: str | None
     content_hash: str
-    metadata: Optional[Dict[str, Any]]
+    metadata: dict[str, Any] | None
     created_at: datetime
-    updated_at: Optional[datetime]
+    updated_at: datetime | None
 
 
 # Question schemas
 class QuestionOption(BaseModel):
     """Schema for question options."""
+
     label: str = Field(..., pattern="^[A-D]$")
     text: str = Field(..., min_length=1)
 
 
 class QuestionCreate(BaseModel):
     """Schema for creating a question."""
+
     document_id: uuid.UUID
     question_text: str = Field(..., min_length=10)
     question_type: QuestionType = QuestionType.MULTIPLE_CHOICE
-    options: Optional[List[QuestionOption]] = None
+    options: list[QuestionOption] | None = None
     correct_answer: str = Field(..., min_length=1)
-    explanation: Optional[str] = None
-    difficulty_level: Optional[DifficultyLevel] = None
-    bloom_level: Optional[str] = None
-    topic: Optional[str] = None
+    explanation: str | None = None
+    difficulty_level: DifficultyLevel | None = None
+    bloom_level: str | None = None
+    topic: str | None = None
 
 
 class QuestionResponse(BaseSchema):
     """Schema for question response."""
+
     id: uuid.UUID
     document_id: uuid.UUID
     question_text: str
     question_type: str
-    options: Optional[List[Dict[str, str]]]
+    options: list[dict[str, str]] | None
     correct_answer: str
-    explanation: Optional[str]
-    difficulty_level: Optional[str]
-    bloom_level: Optional[str]
-    topic: Optional[str]
-    quality_score: Optional[float]
+    explanation: str | None
+    difficulty_level: str | None
+    bloom_level: str | None
+    topic: str | None
+    quality_score: float | None
     is_approved: bool
     created_at: datetime
-    updated_at: Optional[datetime]
+    updated_at: datetime | None
 
 
 # Generation request schemas
 class GenerationRequest(BaseModel):
     """Schema for question generation request."""
+
     document_id: uuid.UUID
     num_questions: int = Field(default=5, ge=1, le=50)
-    difficulty_level: Optional[DifficultyLevel] = None
-    question_types: List[QuestionType] = Field(default=[QuestionType.MULTIPLE_CHOICE])
-    topics: Optional[List[str]] = None
+    difficulty_level: DifficultyLevel | None = None
+    question_types: list[QuestionType] = Field(default=[QuestionType.MULTIPLE_CHOICE])
+    topics: list[str] | None = None
 
 
 class GenerationResponse(BaseModel):
     """Schema for generation response."""
+
     job_id: uuid.UUID
     document_id: uuid.UUID
     status: str
     num_questions_requested: int
-    questions: Optional[List[QuestionResponse]] = None
+    questions: list[QuestionResponse] | None = None
     created_at: datetime
 
 
 # Evaluation schemas
 class EvaluationRequest(BaseModel):
     """Schema for question evaluation request."""
-    question_id: Optional[uuid.UUID] = None
-    question_text: Optional[str] = None
-    options: Optional[List[QuestionOption]] = None
-    correct_answer: Optional[str] = None
-    explanation: Optional[str] = None
+
+    question_id: uuid.UUID | None = None
+    question_text: str | None = None
+    options: list[QuestionOption] | None = None
+    correct_answer: str | None = None
+    explanation: str | None = None
 
 
 class EvaluationResponse(BaseModel):
     """Schema for evaluation response."""
+
     quality_score: float = Field(..., ge=0, le=100)
     is_approved: bool
-    feedback: Dict[str, Any]
-    suggestions: List[str]
-    issues: List[str]
+    feedback: dict[str, Any]
+    suggestions: list[str]
+    issues: list[str]
 
 
 # Ingestion schemas
 class IngestionRequest(BaseModel):
     """Schema for document ingestion request."""
+
     title: str = Field(..., min_length=1, max_length=255)
     source_type: SourceType
-    source_url: Optional[HttpUrl] = None
-    content: Optional[str] = None
-    metadata: Optional[Dict[str, Any]] = None
+    source_url: HttpUrl | None = None
+    content: str | None = None
+    metadata: dict[str, Any] | None = None
 
 
 class IngestionResponse(BaseModel):
     """Schema for ingestion response."""
+
     job_id: uuid.UUID
     document: DocumentResponse
     status: str
-    chunks_created: Optional[int] = None
+    chunks_created: int | None = None
     message: str
 
 
 # List response schemas
 class PaginatedResponse(BaseModel):
     """Schema for paginated responses."""
-    items: List[Any]
+
+    items: list[Any]
     total: int
     page: int
     size: int
@@ -167,17 +183,20 @@ class PaginatedResponse(BaseModel):
 
 class DocumentListResponse(PaginatedResponse):
     """Schema for document list response."""
-    items: List[DocumentResponse]
+
+    items: list[DocumentResponse]
 
 
 class QuestionListResponse(PaginatedResponse):
     """Schema for question list response."""
-    items: List[QuestionResponse]
+
+    items: list[QuestionResponse]
 
 
 # Error schemas
 class ErrorResponse(BaseModel):
     """Schema for error responses."""
+
     error: str
-    detail: Optional[str] = None
-    code: Optional[str] = None
+    detail: str | None = None
+    code: str | None = None

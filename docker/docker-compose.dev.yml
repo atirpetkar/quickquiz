@@ -1,0 +1,137 @@
+version: "3.8"
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: builder
+    container_name: quickquiz-app-dev
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+      - "5678:5678" # Debug port
+    environment:
+      - DATABASE_URL=postgresql://quickquiz:dev_password@postgres:5432/quickquiz_dev
+      - REDIS_URL=redis://redis:6379/0
+      - ENVIRONMENT=development
+      - LOG_LEVEL=debug
+      - DEBUG=true
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ../src:/app/src:rw
+      - ../tests:/app/tests:rw
+      - ../scripts:/app/scripts:rw
+      - ../alembic.ini:/app/alembic.ini:rw
+      - ../alembic:/app/alembic:rw
+      - app_logs_dev:/app/logs
+    networks:
+      - quickquiz-dev-network
+    command:
+      [
+        "python",
+        "-m",
+        "uvicorn",
+        "quickquiz.api.main:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+        "--reload",
+        "--log-level",
+        "debug",
+      ]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  postgres:
+    image: pgvector/pgvector:pg15
+    container_name: quickquiz-postgres-dev
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=quickquiz_dev
+      - POSTGRES_USER=quickquiz
+      - POSTGRES_PASSWORD=dev_password
+      - POSTGRES_HOST_AUTH_METHOD=md5
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    ports:
+      - "5433:5432" # Different port to avoid conflicts
+    networks:
+      - quickquiz-dev-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U quickquiz -d quickquiz_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  redis:
+    image: redis:7-alpine
+    container_name: quickquiz-redis-dev
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data_dev:/data
+    ports:
+      - "6380:6379" # Different port to avoid conflicts
+    networks:
+      - quickquiz-dev-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # Optional: PgAdmin for database management
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: quickquiz-pgadmin-dev
+    restart: unless-stopped
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@quickquiz.dev
+      - PGADMIN_DEFAULT_PASSWORD=admin
+      - PGADMIN_CONFIG_SERVER_MODE=False
+    ports:
+      - "5050:80"
+    networks:
+      - quickquiz-dev-network
+    depends_on:
+      - postgres
+
+  # Optional: Redis Commander for Redis management
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: quickquiz-redis-commander-dev
+    restart: unless-stopped
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - "8081:8081"
+    networks:
+      - quickquiz-dev-network
+    depends_on:
+      - redis
+
+volumes:
+  postgres_data_dev:
+    driver: local
+  redis_data_dev:
+    driver: local
+  app_logs_dev:
+    driver: local
+
+networks:
+  quickquiz-dev-network:
+    driver: bridge

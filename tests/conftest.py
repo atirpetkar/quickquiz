@@ -1,14 +1,14 @@
 """Test configuration and fixtures for QuickQuiz-GPT."""
 
-import pytest
 import asyncio
-from typing import AsyncGenerator
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+from collections.abc import AsyncGenerator
+
+import pytest
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
 
-from src.quickquiz.core.database import Base
 from src.quickquiz.core.config import Settings
-
+from src.quickquiz.core.database import Base
 
 # Test database URL (SQLite for testing)
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
@@ -16,6 +16,7 @@ TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
 class TestSettings(Settings):
     """Test-specific settings."""
+
     database_url: str = TEST_DATABASE_URL
     redis_url: str = "redis://localhost:6379"
     openai_api_key: str = "test-key"
@@ -37,15 +38,15 @@ async def test_engine():
         TEST_DATABASE_URL,
         echo=False,
         poolclass=StaticPool,
-        connect_args={"check_same_thread": False}
+        connect_args={"check_same_thread": False},
     )
-    
+
     # Create all tables
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    
+
     yield engine
-    
+
     await engine.dispose()
 
 
@@ -53,11 +54,9 @@ async def test_engine():
 async def test_db(test_engine) -> AsyncGenerator[AsyncSession, None]:
     """Create test database session."""
     TestSessionLocal = async_sessionmaker(
-        test_engine,
-        class_=AsyncSession,
-        expire_on_commit=False
+        test_engine, class_=AsyncSession, expire_on_commit=False
     )
-    
+
     async with TestSessionLocal() as session:
         yield session
 
@@ -73,9 +72,9 @@ def sample_document_data():
     """Sample document data for testing."""
     return {
         "title": "Test Document",
-        "source_type": "text", 
+        "source_type": "text",
         "content": "This is a sample document content for testing purposes. It contains educational material about machine learning algorithms.",
-        "metadata": {"test": True}
+        "metadata": {"test": True},
     }
 
 
@@ -89,10 +88,10 @@ def sample_question_data():
             {"label": "A", "text": "A type of artificial intelligence"},
             {"label": "B", "text": "A programming language"},
             {"label": "C", "text": "A database system"},
-            {"label": "D", "text": "A web framework"}
+            {"label": "D", "text": "A web framework"},
         ],
         "correct_answer": "A",
         "explanation": "Machine learning is a subset of artificial intelligence.",
         "difficulty_level": "medium",
-        "bloom_level": "Understanding"
+        "bloom_level": "Understanding",
     }

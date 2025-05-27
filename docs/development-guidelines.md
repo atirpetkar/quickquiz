@@ -12,7 +12,7 @@
 - Used in production deployments, Docker containers
 - Keep this minimal and lean
 
-#### `requirements-dev.txt` - Development Dependencies  
+#### `requirements-dev.txt` - Development Dependencies
 - Includes production dependencies via `-r requirements.txt`
 - Adds development tools (testing, linting, etc.)
 - Used by developers and CI/CD
@@ -149,7 +149,7 @@ Add to your IDE's import organization rules:
 
 #### Red Flags During Review:
 - `import pytest` in non-test files
-- `import mypy` in production code  
+- `import mypy` in production code
 - `import ruff` in production code
 - Hard-coded debug flags
 - Development-only environment variables in production code
@@ -163,7 +163,7 @@ FROM python:3.12-slim as development
 COPY requirements-dev.txt .
 RUN pip install -r requirements-dev.txt
 
-# Production stage  
+# Production stage
 FROM python:3.12-slim as production
 COPY requirements.txt .
 RUN pip install -r requirements.txt
@@ -191,7 +191,7 @@ docker run quickquiz:prod python -c "from src.quickquiz.api.main import app"
 If you accidentally deploy with dev dependencies:
 
 1. **Immediate**: Rollback to previous version
-2. **Fix**: Remove dev-only imports from production code  
+2. **Fix**: Remove dev-only imports from production code
 3. **Test**: Run `python scripts/test_prod_deps.py`
 4. **Deploy**: Re-deploy with fixed code
 

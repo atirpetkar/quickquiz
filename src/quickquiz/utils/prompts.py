@@ -1,22 +1,22 @@
 """Prompt templates for LLM interactions."""
 
-from typing import List, Dict, Any, Optional
+from typing import Any
 
 
 class PromptTemplates:
     """Collection of prompt templates for question generation and evaluation."""
-    
+
     def get_question_generation_prompt(
-        self, 
-        context: str, 
+        self,
+        context: str,
         difficulty: str = "medium",
         question_type: str = "multiple_choice",
-        topic: Optional[str] = None
+        topic: str | None = None,
     ) -> str:
         """Generate prompt for question generation."""
-        
+
         topic_instruction = f" Focus on the topic: {topic}." if topic else ""
-        
+
         prompt = f"""
 You are an expert educational content creator. Generate a high-quality {difficulty} difficulty {question_type} question based on the provided context.
 
@@ -51,18 +51,18 @@ Response format (JSON):
 Generate one high-quality question:
 """
         return prompt
-    
+
     def get_evaluation_prompt(
-        self, 
-        question_text: str, 
-        options: List[Dict[str, str]], 
-        correct_answer: str, 
-        explanation: str
+        self,
+        question_text: str,
+        options: list[dict[str, str]],
+        correct_answer: str,
+        explanation: str,
     ) -> str:
         """Generate prompt for question evaluation."""
-        
+
         options_text = "\n".join([f"{opt['label']}. {opt['text']}" for opt in options])
-        
+
         prompt = f"""
 You are an expert educational assessment evaluator. Evaluate the quality of this quiz question on a scale of 0-100.
 
@@ -91,7 +91,7 @@ Response format (JSON):
     "quality_score": 85,
     "feedback": {{
         "clarity": "Good|Needs Improvement|Excellent",
-        "factual_accuracy": "Accurate|Questionable|Excellent", 
+        "factual_accuracy": "Accurate|Questionable|Excellent",
         "educational_value": "High|Medium|Low",
         "option_quality": "Good|Poor|Excellent"
     }},
@@ -103,10 +103,10 @@ Response format (JSON):
 Evaluate this question:
 """
         return prompt
-    
+
     def get_context_retrieval_prompt(self, query: str, max_chunks: int = 3) -> str:
         """Generate prompt for context retrieval and ranking."""
-        
+
         prompt = f"""
 Given the query: "{query}"
 
@@ -123,7 +123,7 @@ Response format (JSON):
 {{
     "relevant_chunks": [
         {{
-            "chunk_id": "chunk_identifier", 
+            "chunk_id": "chunk_identifier",
             "relevance_score": 0.95,
             "reason": "Why this chunk is relevant"
         }}
@@ -131,10 +131,12 @@ Response format (JSON):
 }}
 """
         return prompt
-    
-    def get_difficulty_adjustment_prompt(self, question: str, target_difficulty: str) -> str:
+
+    def get_difficulty_adjustment_prompt(
+        self, question: str, target_difficulty: str
+    ) -> str:
         """Generate prompt for adjusting question difficulty."""
-        
+
         prompt = f"""
 Adjust the following question to {target_difficulty} difficulty level:
 
@@ -142,7 +144,7 @@ Original Question: {question}
 
 Guidelines for {target_difficulty} difficulty:
 - Easy: Basic recall, simple concepts, straightforward language
-- Medium: Application of concepts, moderate complexity, some analysis required  
+- Medium: Application of concepts, moderate complexity, some analysis required
 - Hard: Complex reasoning, synthesis, evaluation, advanced concepts
 
 Maintain the core learning objective while adjusting complexity.
@@ -156,21 +158,22 @@ Response format (JSON):
 }}
 """
         return prompt
-    
+
     def get_batch_generation_prompt(
-        self, 
-        context: str, 
-        num_questions: int, 
-        requirements: Dict[str, Any]
+        self, context: str, num_questions: int, requirements: dict[str, Any]
     ) -> str:
         """Generate prompt for batch question generation."""
-        
-        difficulty = requirements.get('difficulty', 'medium')
-        topics = requirements.get('topics', [])
-        question_types = requirements.get('question_types', ['multiple_choice'])
-        
-        topics_text = f"Focus on these topics: {', '.join(topics)}" if topics else "Cover various topics from the content"
-        
+
+        difficulty = requirements.get("difficulty", "medium")
+        topics = requirements.get("topics", [])
+        question_types = requirements.get("question_types", ["multiple_choice"])
+
+        topics_text = (
+            f"Focus on these topics: {', '.join(topics)}"
+            if topics
+            else "Cover various topics from the content"
+        )
+
         prompt = f"""
 Generate {num_questions} diverse, high-quality quiz questions from the following context.
 
