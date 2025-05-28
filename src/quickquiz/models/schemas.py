@@ -3,7 +3,7 @@
 import uuid
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 
 from pydantic import BaseModel, Field, HttpUrl
 
@@ -47,9 +47,9 @@ class DocumentCreate(BaseModel):
 
     title: str = Field(..., min_length=1, max_length=255)
     source_type: SourceType
-    source_url: HttpUrl | None = None
-    content: str | None = None
-    metadata: dict[str, Any] | None = None
+    source_url: Optional[HttpUrl] = None
+    content: Optional[str] = None
+    metadata: Optional[dict[str, Any]] = None
 
 
 class DocumentResponse(BaseSchema):
@@ -58,11 +58,11 @@ class DocumentResponse(BaseSchema):
     id: uuid.UUID
     title: str
     source_type: str
-    source_url: str | None
+    source_url: Optional[str]
     content_hash: str
-    metadata: dict[str, Any] | None
+    metadata: Optional[dict[str, Any]]
     created_at: datetime
-    updated_at: datetime | None
+    updated_at: Optional[datetime]
 
 
 # Question schemas
@@ -79,12 +79,12 @@ class QuestionCreate(BaseModel):
     document_id: uuid.UUID
     question_text: str = Field(..., min_length=10)
     question_type: QuestionType = QuestionType.MULTIPLE_CHOICE
-    options: list[QuestionOption] | None = None
+    options: Optional[list[QuestionOption]] = None
     correct_answer: str = Field(..., min_length=1)
-    explanation: str | None = None
-    difficulty_level: DifficultyLevel | None = None
-    bloom_level: str | None = None
-    topic: str | None = None
+    explanation: Optional[str] = None
+    difficulty_level: Optional[DifficultyLevel] = None
+    bloom_level: Optional[str] = None
+    topic: Optional[str] = None
 
 
 class QuestionResponse(BaseSchema):
@@ -94,16 +94,16 @@ class QuestionResponse(BaseSchema):
     document_id: uuid.UUID
     question_text: str
     question_type: str
-    options: list[dict[str, str]] | None
+    options: Optional[list[dict[str, str]]]
     correct_answer: str
-    explanation: str | None
-    difficulty_level: str | None
-    bloom_level: str | None
-    topic: str | None
-    quality_score: float | None
+    explanation: Optional[str]
+    difficulty_level: Optional[str]
+    bloom_level: Optional[str]
+    topic: Optional[str]
+    quality_score: Optional[float]
     is_approved: bool
     created_at: datetime
-    updated_at: datetime | None
+    updated_at: Optional[datetime]
 
 
 # Generation request schemas
@@ -112,9 +112,9 @@ class GenerationRequest(BaseModel):
 
     document_id: uuid.UUID
     num_questions: int = Field(default=5, ge=1, le=50)
-    difficulty_level: DifficultyLevel | None = None
+    difficulty_level: Optional[DifficultyLevel] = None
     question_types: list[QuestionType] = Field(default=[QuestionType.MULTIPLE_CHOICE])
-    topics: list[str] | None = None
+    topics: Optional[list[str]] = None
 
 
 class GenerationResponse(BaseModel):
@@ -124,7 +124,7 @@ class GenerationResponse(BaseModel):
     document_id: uuid.UUID
     status: str
     num_questions_requested: int
-    questions: list[QuestionResponse] | None = None
+    questions: Optional[list[QuestionResponse]] = None
     created_at: datetime
 
 
@@ -132,11 +132,11 @@ class GenerationResponse(BaseModel):
 class EvaluationRequest(BaseModel):
     """Schema for question evaluation request."""
 
-    question_id: uuid.UUID | None = None
-    question_text: str | None = None
-    options: list[QuestionOption] | None = None
-    correct_answer: str | None = None
-    explanation: str | None = None
+    question_id: Optional[uuid.UUID] = None
+    question_text: Optional[str] = None
+    options: Optional[list[QuestionOption]] = None
+    correct_answer: Optional[str] = None
+    explanation: Optional[str] = None
 
 
 class EvaluationResponse(BaseModel):
@@ -155,9 +155,9 @@ class IngestionRequest(BaseModel):
 
     title: str = Field(..., min_length=1, max_length=255)
     source_type: SourceType
-    source_url: HttpUrl | None = None
-    content: str | None = None
-    metadata: dict[str, Any] | None = None
+    source_url: Optional[HttpUrl] = None
+    content: Optional[str] = None
+    metadata: Optional[dict[str, Any]] = None
 
 
 class IngestionResponse(BaseModel):
@@ -166,7 +166,7 @@ class IngestionResponse(BaseModel):
     job_id: uuid.UUID
     document: DocumentResponse
     status: str
-    chunks_created: int | None = None
+    chunks_created: Optional[int] = None
     message: str
 
 
@@ -198,5 +198,5 @@ class ErrorResponse(BaseModel):
     """Schema for error responses."""
 
     error: str
-    detail: str | None = None
-    code: str | None = None
+    detail: Optional[str] = None
+    code: Optional[str] = None
